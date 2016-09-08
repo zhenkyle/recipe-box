@@ -6,7 +6,8 @@ const { Provider, connect } = ReactRedux;
 const types = {
   ADD_RECIPE: 'ADD_RECIPE',
   DELETE_RECIPE: 'DELETE_RECIPE',
-  EDIT_RECIPE: 'EDIT_RECIPE'
+  EDIT_RECIPE: 'EDIT_RECIPE',
+  UPDATE_RECIPE: 'UPDATE_RECIPE'
 
 }
 
@@ -35,10 +36,24 @@ const RecipeActions = {
       ingredients
     }
   },
+
+  updateRecipe: function updateRecipe(id, name, ingredients) {
+    return {
+      type: types.UPDATE_RECIPE,
+      id,
+      name,
+      ingredients
+    }
+  },
 }
 
 // reducers
 const initialState = {
+  editRecipe: {
+    id: -1,
+    name: '',
+    ingredients: ''
+  },
   recipes: [{
     name: 'Pumpin Pie',
     ingredients: 'Pumpkin Puree,Sweetened Condensed Milk,Eggs',
@@ -71,7 +86,7 @@ function recipes(state = [], action) {
         recipe.id !== action.id
       )
 
-    case types.EDIT_RECIPE:
+    case types.UPDATE_RECIPE:
       return state.map(recipe =>
         recipe.id === action.id ?
           Object.assign({},
@@ -86,6 +101,19 @@ function recipes(state = [], action) {
   }
 }
 
+function editRecipe(state = {}, action) {
+  switch (action.type) {
+    case types.EDIT_RECIPE:
+      return Object.assign({},
+                           state,
+                           { id: action.id,
+                             name: action.name,
+                            ingredients: action.ingredients
+                          })
+    default:
+      return state
+  }
+}
 
 // Components
 /*
@@ -94,7 +122,7 @@ const App = (recipes, actions) => (
 )
 */
 
-const Recipe = ({id, name, ingredients, actions}) => (
+const Recipe = ({id, name, ingredients, actions}) =>
   <div className="panel panel-default">
     <div className="panel-heading" role="tab" id="headingOne">
       <h4 className="panel-title">
@@ -116,11 +144,12 @@ const Recipe = ({id, name, ingredients, actions}) => (
       </div>
       <div className="panel-footer">
         <button type="button" className="btn btn-danger" onClick={() => actions.deleteRecipe(id)}>Delete</button>
-        <button type="button" className="btn btn-default" data-toggle="modal" data-target="#myModal">Edit</button>
+        <button type="button" className="btn btn-default" data-toggle="modal" data-target="#myModal1"
+         onClick={() => actions.editRecipe(id, name, ingredients)}
+        >Edit</button>
       </div>
     </div>
-  </div>
-);
+  </div>;
 
 Recipe.propTypes = {
   id: PropTypes.number.isRequired,
@@ -161,7 +190,7 @@ const AddRecipe = ({actions}) => {
             </form>
           </div>
           <div className="modal-footer">
-            <button type="button" className="btn btn-primary"
+            <button type="button" className="btn btn-primary" data-dismiss="modal"
             onClick={()=>{
               if (!name.value.trim()) {
                 return
@@ -185,7 +214,69 @@ AddRecipe.propTypes = {
   actions: PropTypes.object.isRequired
 }
 
-const App = ({recipes, actions}) => {
+const EditRecipe = ({id, name, ingredients, actions}) => {
+  let fname;
+  let fingredients;
+  return (
+    <div className="modal fade" id="myModal1" tabIndex="-1" role="dialog" aria-labelledby="myModalLabel">
+      <div className="modal-dialog" role="document">
+        <div className="modal-content">
+          <div className="modal-header">
+            <button type="button" className="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 className="modal-title" id="myModalLabel">Edit a Recipe</h4>
+          </div>
+          <div className="modal-body">
+            <form>
+              <div className="form-group">
+                <label htmlFor="receipe">Recipe</label>
+                <input type="text" className="form-control" id="receipe" placeholder="Receipe Name" value={name}
+                onChange={()=>actions.editRecipe(id, fname.value, fingredients.value)}
+                ref={node => {
+                  fname = node
+                }}
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="ingredients">Ingredients</label>
+                <input type="text" className="form-control" id="ingredients" placeholder="Enter Ingredients,Seperated,By Commas"
+                value={ingredients}
+                onChange={()=>actions.editRecipe(id, fname.value, fingredients.value)}
+                ref={node => {
+                  fingredients = node
+                }}
+                />
+              </div>
+            </form>
+          </div>
+          <div className="modal-footer">
+            <button type="button" className="btn btn-primary" data-dismiss="modal"
+            onClick={()=>{
+              if (!fname.value.trim()) {
+                return
+              }
+              if (!fingredients.value.trim()) {
+                return
+              }
+              actions.updateRecipe(id,fname.value,fingredients.value);
+              fname.value = '';
+              fingredients.value = '';
+            }}>Save Recipe</button>
+            <button type="button" className="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+};
+
+EditRecipe.propTypes = {
+  id: PropTypes.number,
+  name: PropTypes.string,
+  ingredients: PropTypes.string,
+  actions: PropTypes.object.isRequired
+}
+
+const App = ({recipes, editRecipe, actions}) => {
   return (
     <div>
     <div className="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
@@ -207,6 +298,12 @@ const App = ({recipes, actions}) => {
     <AddRecipe
       actions={actions}
     />
+    <EditRecipe
+      id ={editRecipe.id}
+      name={editRecipe.name}
+      ingredients={editRecipe.ingredients}
+      actions={actions}
+    />
     <div className="footer">
       <p>♥ from the Zhenkyle</p>
     </div>
@@ -217,11 +314,13 @@ const App = ({recipes, actions}) => {
 
 App.propTypes = {
   recipes: PropTypes.array.isRequired,
+  editRecipe: PropTypes.object.isRequired
 }
 
 function mapStateToProps(state) {
   return {
-    recipes: state.recipes
+    recipes: state.recipes,
+    editRecipe: state.editRecipe
   }
 }
 
@@ -235,10 +334,14 @@ let AppRecipe = connect(
   mapStateToProps,
   mapDispatchToProps
 )(App)
+
+
 // Main Program
 
 // store
-let store = createStore(combineReducers({recipes}),initialState);
+let store = createStore(combineReducers({recipes,editRecipe}),initialState);
+
+// render
 ReactDOM.render(
   <Provider store={store}>
     <AppRecipe />

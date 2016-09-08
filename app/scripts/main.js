@@ -338,9 +338,24 @@ let AppRecipe = connect(
 
 // Main Program
 
-// store
-let store = createStore(combineReducers({recipes,editRecipe}),initialState);
+let currentValue = JSON.parse(window.localStorage.getItem('_zhenkyle_recipes'));
+if ( currentValue === null) {
+    currentValue = initialState.recipes;
+  }
 
+let myState = Object.assign({},
+    {recipes: currentValue, 
+     editRecipe: initialState.editRecipe});
+
+// store
+let store = createStore(combineReducers({recipes,editRecipe}),myState);
+store.subscribe(() => {
+  let previousValue = currentValue;
+  currentValue = store.getState().recipes;
+  if (previousValue !== currentValue) {
+    window.localStorage.setItem('_zhenkyle_recipes',JSON.stringify(currentValue));
+  }
+})
 // render
 ReactDOM.render(
   <Provider store={store}>

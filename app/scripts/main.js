@@ -56,15 +56,15 @@ const initialState = {
   },
   recipes: [{
     name: 'Pumpin Pie',
-    ingredients: 'Pumpkin Puree,Sweetened Condensed Milk,Eggs',
+    ingredients: 'Pumpkin Puree,Sweetened Condensed Milk,Eggs,Pumpkin Pie Spice,Pie Crust',
     id: 0
   }, {
     name: 'Spahetti',
-    ingredients: 'a,b,c',
+    ingredients: 'Noodles,Tomato Sauce,(Optional) Meatballs',
     id: 1
   }, {
     name: 'Onion Pie',
-    ingredients: 'd,e,f',
+    ingredients: 'Onion,Pie Crust,Sounds Yummy right?',
     id: 2
   }]
 }
@@ -73,12 +73,12 @@ function recipes(state = [], action) {
   switch (action.type) {
     case types.ADD_RECIPE:
       return [
+        ...state,
         {
           id: state.reduce((maxId, recipe) => Math.max(recipe.id, maxId), -1) + 1,
           name: action.name,
           ingredients: action.ingredients
-        },
-        ...state
+        }
       ]
 
     case types.DELETE_RECIPE:
@@ -227,8 +227,8 @@ const EditRecipe = ({id, name, ingredients, actions}) => {
           </div>
           <div className="modal-body">
             <form>
-              <div className="form-group">
-                <label htmlFor="receipe">Recipe</label>
+              <div className={!name.trim() ? 'form-group has-error': 'form-group'}>
+                <label className="control-label" htmlFor="receipe">Recipe</label>
                 <input type="text" className="form-control" id="receipe" placeholder="Receipe Name" value={name}
                 onChange={()=>actions.editRecipe(id, fname.value, fingredients.value)}
                 ref={node => {
@@ -236,8 +236,8 @@ const EditRecipe = ({id, name, ingredients, actions}) => {
                 }}
                 />
               </div>
-              <div className="form-group">
-                <label htmlFor="ingredients">Ingredients</label>
+              <div className={!ingredients.trim() ? 'form-group has-error': 'form-group'}>
+                <label className="control-label" htmlFor="ingredients">Ingredients</label>
                 <input type="text" className="form-control" id="ingredients" placeholder="Enter Ingredients,Seperated,By Commas"
                 value={ingredients}
                 onChange={()=>actions.editRecipe(id, fname.value, fingredients.value)}
@@ -249,7 +249,7 @@ const EditRecipe = ({id, name, ingredients, actions}) => {
             </form>
           </div>
           <div className="modal-footer">
-            <button type="button" className="btn btn-primary" data-dismiss="modal"
+            <button type="button" className="btn btn-primary" data-dismiss={!name.trim() || !ingredients.trim() ? null: "modal"}
             onClick={()=>{
               if (!fname.value.trim()) {
                 return
@@ -344,7 +344,7 @@ if ( currentValue === null) {
   }
 
 let myState = Object.assign({},
-    {recipes: currentValue, 
+    {recipes: currentValue,
      editRecipe: initialState.editRecipe});
 
 // store
@@ -356,6 +356,7 @@ store.subscribe(() => {
     window.localStorage.setItem('_zhenkyle_recipes',JSON.stringify(currentValue));
   }
 })
+
 // render
 ReactDOM.render(
   <Provider store={store}>

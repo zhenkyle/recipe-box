@@ -348,7 +348,8 @@ let myState = Object.assign({},
      editRecipe: initialState.editRecipe});
 
 // store
-let store = createStore(combineReducers({recipes,editRecipe}),myState);
+let store = createStore(combineReducers({recipes,editRecipe}),myState,
+window.devToolsExtension && window.devToolsExtension());
 store.subscribe(() => {
   let previousValue = currentValue;
   currentValue = store.getState().recipes;
